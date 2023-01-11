@@ -16,7 +16,10 @@ export_env_dir() {
 
 export_env_dir $3
 
-SLACK_MESSAGE="*$HEROKU_APP_NAME* was deployed"
+# HEROKU_SLUG_COMMIT is the previously released commit at this stage;
+# see https://stackoverflow.com/a/43661131/3601658
+# similarly, HEROKU_RELEASE_VERSION is actually still the previous version :/
+SLACK_MESSAGE="*$HEROKU_APP_NAME* $HEROKU_RELEASE_VERSION+1 deployed (commit ${SOURCE_VERSION:0:8})"
 
 if [[ -z "${DEPLOY_NOTIFY_GITHUB_AUTH_TOKEN}" || -z "${DEPLOY_NOTIFY_GITHUB_ORG}" || -z "${DEPLOY_NOTIFY_GITHUB_PROJECT}" ]]; then
   # Not loading Github Data
