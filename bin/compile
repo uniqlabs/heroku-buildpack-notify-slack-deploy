@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# parse args
+export BUILD_DIR=$1
+export CACHE_DIR=$2
+export ENV_DIR=$3
+
+
 export_env_dir() {
   # from https://devcenter.heroku.com/articles/buildpack-api#bin-compile
   env_dir=$1
@@ -14,9 +20,22 @@ export_env_dir() {
   fi
 }
 
-export_env_dir $3
+json_get() {
+  local path=$1
+  local ret=$(python3 -c "import sys, json; print(json.load(sys.stdin or 'null', strict=False)$path)" 2> /dev/null || echo "")
+  echo "$ret"
+}
 
-SLACK_MESSAGE="*$HEROKU_APP_NAME* was deployed"
+
+export_env_dir $ENV_DIR
+
+# retrieve version from package.json, if available
+pkg_version=$(cat "$BUILD_DIR/package.json" 2> /dev/null | json_get [\"version\"])
+
+# HEROKU_SLUG_COMMIT is the previously released commit at this stage;
+# see https://stackoverflow.com/a/43661131/3601658
+# similarly, HEROKU_RELEASE_VERSION is actually still the previous version :/
+SLACK_MESSAGE="*$HEROKU_APP_NAME v$pkg_version* deployed (commit ${SOURCE_VERSION:0:8}; Heroku app $HEROKU_RELEASE_VERSION+1)"
 
 if [[ -z "${DEPLOY_NOTIFY_GITHUB_AUTH_TOKEN}" || -z "${DEPLOY_NOTIFY_GITHUB_ORG}" || -z "${DEPLOY_NOTIFY_GITHUB_PROJECT}" ]]; then
   # Not loading Github Data
